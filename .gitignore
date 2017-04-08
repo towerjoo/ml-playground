@@ -1,3 +1,5 @@
 *.png
 *.swp
 *.swo
+*.pyc
+*.h5

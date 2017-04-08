@@ -8,21 +8,30 @@ import keras
 from keras.models import Sequential
 from keras.layers import Dropout, Dense, Flatten, Conv2D, MaxPooling2D
 
-def gen_captcha():
-    image = ImageCaptcha(width=60, height=100)
-    for i in range(10000):
-        d = random.randint(0, 4)
-        img = image.generate_image(str(d))
-        img = img.convert('L')
-        guid = uuid.uuid4()
-        img.save("train/{}-{}.png".format(d, guid))
+# global settings
+batch_size = 128
+epochs = 12
+width = 60
+height = 100
+number_classes = 10
+weights_h5_file = "weights.h5"
+input_shape = (width, height, 1)
 
+def _gen_one_captcha(folder):
+    image = ImageCaptcha(width=width, height=height)
+    d = random.randint(0, 9)
+    img = image.generate_image(str(d))
+    img = img.convert('L')
+    guid = uuid.uuid4()
+    path = "{}/{}-{}.png".format(folder, d, guid)
+    img.save(path)
+    return path
+
+def gen_captcha():
+    for i in range(10000):
+        _gen_one_captcha("train")
     for i in range(1000):
-        d = random.randint(0, 4)
-        img = image.generate_image(str(d))
-        img = img.convert('L')
-        guid = uuid.uuid4()
-        img.save("test/{}-{}.png".format(d, guid))
+        _gen_one_captcha("test")
 
 def load_data():
     x_train = []
@@ -39,7 +48,7 @@ def load_data():
         y_test.append(f.split('-')[0])
     return (np.asarray(x_train), np.asarray(y_train)), (np.asarray(x_test), np.asarray(y_test))
 
-def build_model(number_classes, input_shape):
+def build_model():
     layers = [
         Conv2D(64, (3, 3), activation='relu', input_shape=input_shape),
         Conv2D(32, (3, 3), activation='relu'),
@@ -51,46 +60,65 @@ def build_model(number_classes, input_shape):
         Dense(number_classes, activation='softmax')
     ]
     model = Sequential(layers)
+    model.compile(loss=keras.losses.categorical_crossentropy,
+                optimizer=keras.optimizers.Adadelta(),
+                metrics=["accuracy"])
     return model
-    
 
-def train():
-    batch_size = 128
-    epochs = 12
-    width = 60
-    height = 100
-    number_classes = 10
+def normalize_data():
     (x_train, y_train), (x_test, y_test) = load_data()
     x_train /= 255
     x_test /= 255
 
     x_train = x_train.reshape(x_train.shape[0], width, height, 1)
     x_test = x_test.reshape(x_test.shape[0], width, height, 1)
-    input_shape = (width, height, 1)
-
-    print x_train.shape, x_test.shape
 
     y_train = keras.utils.to_categorical(y_train, number_classes)
     y_test = keras.utils.to_categorical(y_test, number_classes)
-    print y_train.shape, y_test.shape
-
-    model = build_model(number_classes, input_shape)
-    model.compile(loss=keras.losses.categorical_crossentropy,
-                optimizer=keras.optimizers.Adadelta(),
-                metrics=["accuracy"])
-    model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, verbose=1, validation_data=(x_test, y_test))
-    score = model.evaluate(x_test, y_test, verbose=0)
-    print('Test loss:', score[0])
-    print('Test accuracy:', score[1])
-    model.save_weights("weights.h5")
-
+    return (x_train, y_train), (x_test, y_test)
     
 
-if __name__ == "__main__":
+def train(save_weights=True):
+
+    (x_train, y_train), (x_test, y_test) = normalize_data()
+
+    model = build_model()
+    model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, verbose=1, validation_data=(x_test, y_test))
+    if save_weights:
+        model.save_weights(weights_h5_file)
+    return model
+
+def evaluate(model):
+    (x_train, y_train), (x_test, y_test) = normalize_data()
+    score = model.evaluate(x_test, y_test, verbose=2)
+    print('Test loss:', score[0])
+    print('Test accuracy:', score[1])
+
+def predict(model, img):
+    im = Image.open(img)
+    data = np.asarray(im, dtype=np.float32)
+    data = data.reshape(1, width, height, 1)
+    return model.predict_classes(data)[0]
+    
+def _get_random_test_input():
+    files = os.listdir("test/")
+    return "test/{}".format(random.choice(files))
+
+def load_trained_model():
     if os.path.exists("train/"):
         pass
     else:
         os.mkdir("train")
         os.mkdir("test")
         gen_captcha()
-    train()
+    if not os.path.exists(weights_h5_file):
+        # means have the saved trained weights
+        train()
+    # load the trained weights
+    model = build_model()
+    model.load_weights(weights_h5_file)
+    return model
+
+if __name__ == "__main__":
+    model = load_trained_model()
+    print predict(model, _get_random_test_input())
