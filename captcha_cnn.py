@@ -90,5 +90,7 @@ if __name__ == "__main__":
     if os.path.exists("train/"):
         pass
     else:
+        os.mkdir("train")
+        os.mkdir("test")
         gen_captcha()
     train()
