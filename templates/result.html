@@ -14,7 +14,8 @@
             $(function(){
                 $("a.gototime").click(function(){
                     var time = parseInt($(this).attr("current"));
-                    document.getElementById("video").currentTime = time;
+                    var frame_rate = {{ frame_rate }};
+                    document.getElementById("video").currentTime = time / frame_rate;
                 });
             });
         </script>
@@ -51,15 +52,11 @@
 
                 <p>
                 <ul>
-                {% for obj, seconds in summary.iteritems() %}
+                {% for obj, frames in summary.iteritems() %}
                 <li>{{ obj }}: 
-                    <ul>
-                        {% for s in seconds %}
-                        <li>
-                            <a href="javascript:void(0)" current="{{ s }}" class="gototime">go to second: {{ s }}</a>
-                        </li>
+                        {% for s in frames %}
+                            <a href="javascript:void(0)" current="{{ s }}" class="gototime">{{ s }}</a>
                         {% endfor %}
-                    </ul>
                 </li>
                 {% endfor %}
                 </ul>

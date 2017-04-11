@@ -7,6 +7,7 @@ from flask import send_from_directory
 import uuid
 from werkzeug.utils import secure_filename
 from werkzeug import SharedDataMiddleware
+import skvideo
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = "upload/"
@@ -36,9 +37,11 @@ def video():
 def result():
     filename = request.args.get("filename")
     video = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    stats = video_classifier.analyze_video(str(video))
+    stats = video_classifier.analyze_video(str(video), .1)
     summary = video_classifier.get_summary(stats)
-    return render_template("result.html", summary=summary, video=video)
+    metadata = skvideo.io.ffprobe(str(video))
+    exec("frame_rate = {}".format(metadata["video"]["@r_frame_rate"]))
+    return render_template("result.html", summary=summary, video=video, frame_rate=frame_rate)
 
 
 @app.route("/gencaptcha")

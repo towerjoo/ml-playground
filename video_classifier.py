@@ -19,7 +19,7 @@ def get_hash(video):
     return hash
         
 
-def analyze_video(video):
+def analyze_video(video, threshold=.2):
     hash = get_hash(video)
     stats = cache.get(hash)
     if stats:
@@ -43,33 +43,34 @@ def analyze_video(video):
             preds = model.predict(x)
 # decode the results into a list of tuples (class, description, probability)
 # (one such list for each sample in the batch)
-            _, obj, prob = decode_predictions(preds, top=1)[0][0]
-            stats.append({
-                "frame": i,
-                "obj": obj,
-                "prob": prob,
-                "second": i / frame_rate,
-            })
+            for pred in decode_predictions(preds, top=5)[0]:
+                _, obj, prob = pred
+                if prob >= threshold:
+                    stats.append({
+                        "frame": i,
+                        "obj": obj.replace("_", " "),
+                        "prob": prob,
+                        "second": i / frame_rate,
+                    })
+        stats.sort(key=lambda x:x["prob"], reverse=True)
         # never expire
         cache.set(hash, stats, timeout=0)
         return stats
         
-def print_summary(stats, threshold=.2):
-    out = get_summary(stats, threshold)
+def print_summary(stats):
+    out = get_summary(stats)
     for obj, seconds in out.iteritems():
         seconds = sorted(list(set(seconds)))
         seconds = [str(s) for s in seconds]
         print "{} appears at second {}".format(obj, ", ".join(seconds))
         
-def get_summary(stats, threshold=.2):
+def get_summary(stats):
     out = {}
     for frame_stat in stats:
-        if frame_stat["prob"] < threshold:
-            continue
         if frame_stat["obj"] not in out:
             out[frame_stat["obj"]] = []
-        if frame_stat["second"] not in out[frame_stat["obj"]]:
-            out[frame_stat["obj"]].append(frame_stat["second"])
+        if frame_stat["frame"] not in out[frame_stat["obj"]]:
+            out[frame_stat["obj"]].append(frame_stat["frame"])
     return out
 
 if __name__ == "__main__":
