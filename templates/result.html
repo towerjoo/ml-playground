@@ -12,17 +12,10 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
         <script>
             $(function(){
-            $("#gencaptcha").click(function(){
-                $.getJSON("/gencaptcha", {}, function(data){
-                    $("#captcha-area").show();
-                    $("#captcha-area img").attr("src", data.path);
+                $("a.gototime").click(function(){
+                    var time = parseInt($(this).attr("current"));
+                    document.getElementById("video").currentTime = time;
                 });
-            });
-            $("#recognize").click(function(){
-                $.getJSON("/recognize", {path: $("#captcha-area img").attr("src")}, function(data){
-                    $("#result").text("Predict:" + data.result + "(Real: " + data.real + ")");
-                });
-            });
             });
         </script>
         
@@ -42,29 +35,37 @@
                     </div>
                     <div id="navbar" class="navbar-collapse collapse">
                         <ul class="nav navbar-nav">
-                            <li class="active"><a href="/">Captcha Recognition</a></li>
+                            <li><a href="/">Captcha Recognition</a></li>
                         </ul>
                         <ul class="nav navbar-nav">
-                            <li><a href="/video/">Video Classfier</a></li>
+                            <li class="active"><a href="/video/">Video Classfier</a></li>
                         </ul>
                     </div>
                 </div>
             </nav>
             <div class="jumbotron">
-                <h1>Captcha Recognition</h1>
-                <p>Generate the captcha on the fly using the python captcha library, and then try to recognize by using the trained model.</p>
+                <h1>Video Classifier</h1>
+                <p>Video Classifier by classifing each frame of the uploaded video.</p>
+                <video id="video" src="/{{ video }}" controls="controls">
+                </video>
+
                 <p>
-                    <a id="gencaptcha" class="btn btn-lg btn-primary" href="javascript:void(0)" role="button">Generate Captcha</a>
+                <ul>
+                {% for obj, seconds in summary.iteritems() %}
+                <li>{{ obj }}: 
+                    <ul>
+                        {% for s in seconds %}
+                        <li>
+                            <a href="javascript:void(0)" current="{{ s }}" class="gototime">go to second: {{ s }}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                {% endfor %}
+                </ul>
                 </p>
-                <div id="captcha-area" style="display:none">
-                    <img src=""></img>
-                    <p>
-                        <a id="recognize" class="btn btn-lg btn-primary" href="javascript:void(0)" role="button">Recognize</a>
-                    </p>
-                    <p id="result">
-                    N/A 
-                    </p>
-                </div>
+
+
             </div>
         </div>
     </body>

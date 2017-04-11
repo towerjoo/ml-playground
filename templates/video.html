@@ -42,29 +42,22 @@
                     </div>
                     <div id="navbar" class="navbar-collapse collapse">
                         <ul class="nav navbar-nav">
-                            <li class="active"><a href="/">Captcha Recognition</a></li>
+                            <li><a href="/">Captcha Recognition</a></li>
                         </ul>
                         <ul class="nav navbar-nav">
-                            <li><a href="/video/">Video Classfier</a></li>
+                            <li class="active"><a href="/video/">Video Classfier</a></li>
                         </ul>
                     </div>
                 </div>
             </nav>
             <div class="jumbotron">
-                <h1>Captcha Recognition</h1>
-                <p>Generate the captcha on the fly using the python captcha library, and then try to recognize by using the trained model.</p>
-                <p>
-                    <a id="gencaptcha" class="btn btn-lg btn-primary" href="javascript:void(0)" role="button">Generate Captcha</a>
-                </p>
-                <div id="captcha-area" style="display:none">
-                    <img src=""></img>
-                    <p>
-                        <a id="recognize" class="btn btn-lg btn-primary" href="javascript:void(0)" role="button">Recognize</a>
-                    </p>
-                    <p id="result">
-                    N/A 
-                    </p>
-                </div>
+                <h1>Video Classifier</h1>
+                <p>Video Classifier by classifing each frame of the uploaded video.</p>
+                <form action="." method="post" enctype="multipart/form-data">
+                    <input type="file" class="file" name="video" />
+                    <br/>
+                    <input class="btn btn-primary" type="submit" value="Submit" />
+                </form>
             </div>
         </div>
     </body>
